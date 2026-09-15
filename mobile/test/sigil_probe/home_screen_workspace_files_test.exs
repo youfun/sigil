@@ -87,7 +87,7 @@ defmodule SigilProbe.HomeScreenWorkspaceFilesTest do
         if value, do: System.put_env(key, value), else: System.delete_env(key)
       end)
 
-      File.rm_rf!(dir)
+      _ = File.rm_rf(dir)
     end)
 
     %{view: mount_screen(HomeScreen), dir: dir}
