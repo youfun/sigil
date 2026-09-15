@@ -27,7 +27,11 @@ defmodule Sigil.MixProject do
   def application do
     [
       mod: {Sigil.Application, []},
-      extra_applications: [:logger, :runtime_tools, :castore]
+      extra_applications: [:logger, :runtime_tools, :castore],
+      # Mob flattens Hex apps onto `-pa`; `:castore` then is not an OTP lib
+      # and `ensure_all_started(:sigil)` must not abort boot. Probe loads the
+      # Mozilla bundle from `priv/cacerts.pem` instead.
+      optional_applications: [:castore]
     ]
   end
 

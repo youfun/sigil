@@ -71,7 +71,7 @@ jobs:
     timeout-minutes: 90
     defaults:
       run:
-        working-directory: android
+        working-directory: mobile
 
     steps:
       - uses: actions/checkout@v5
@@ -117,14 +117,14 @@ jobs:
         with:
           path: |
             ~/.mob/cache
-            android/deps
-            android/_build
+            mobile/deps
+            mobile/_build
             _build
             ~/.mix
             ~/.hex
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: pack-apk-${{ runner.os }}-${{ hashFiles('android/mix.lock', 'mix.lock') }}
+          key: pack-apk-${{ runner.os }}-${{ hashFiles('mobile/mix.lock', 'mix.lock') }}
           restore-keys: |
             pack-apk-${{ runner.os }}-
 
@@ -134,6 +134,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: sigil-android-apk
-          path: android/artifacts/*.apk
+          path: mobile/artifacts/*.apk
           if-no-files-found: error
           retention-days: 14

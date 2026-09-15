@@ -4,7 +4,7 @@
 
 ## 项目状态
 
-Web UI 与 Android native host 共用 `Sigil.Agent` runtime。仓库根即 Mix 工程 `:sigil`；Android host 在 `android/`。
+Web UI 与 native host 共用 `Sigil.Agent` runtime。仓库根即 Mix 工程 `:sigil`；Android/iOS Mob host 在 `mobile/`（其中 `mobile/android/` 是 Gradle，`mobile/ios/` 是 iOS）。
 
 ## Pi Agent 优先技能
 
