@@ -88,7 +88,11 @@ jobs:
 
       - name: Frontend assets
         working-directory: .
-        run: npm ci
+        run: |
+          mix local.hex --force
+          mix local.rebar --force
+          mix deps.get
+          npm ci
 
       - uses: actions/setup-java@v5
         with:
