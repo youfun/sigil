@@ -73,6 +73,7 @@ System.put_env("MOB_DATA_DIR", data_dir)
 :ok = SigilProbe.App.ensure_task_supervisor()
 :ok = SigilProbe.ShareIntake.Lock.ensure_started()
 :ok = SigilProbe.ShareCopy.ensure_started()
+:ok = SigilProbe.Platform.IOS.Registry.ensure_started()
 {:ok, _} = SigilProbe.Repo.start_link()
 
 Ecto.Migrator.run(SigilProbe.Repo, :up, all: true)

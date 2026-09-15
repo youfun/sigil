@@ -27,6 +27,9 @@ concurrency:
   group: android-apk-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: write
+
 jobs:
   apk:
     runs-on: ubuntu-latest
@@ -108,3 +111,14 @@ jobs:
           path: mobile/artifacts/*.apk
           if-no-files-found: error
           retention-days: 14
+
+      - name: Publish GitHub Release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-latest
+          name: Android APK
+          prerelease: true
+          generate_release_notes: true
+          make_latest: false
+          files: mobile/artifacts/*.apk

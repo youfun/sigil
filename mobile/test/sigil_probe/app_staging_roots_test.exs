@@ -73,10 +73,43 @@ defmodule SigilProbe.AppStagingRootsTest do
   end
 
   test "device MOB_DATA_DIR maps to filesDir/share_intake" do
+    previous_platform = Application.get_env(:sigil_probe, :native_platform)
+    SigilProbe.NativePlatform.put!(:android)
+
+    on_exit(fn ->
+      if previous_platform == nil do
+        Application.delete_env(:sigil_probe, :native_platform)
+      else
+        Application.put_env(:sigil_probe, :native_platform, previous_platform)
+      end
+    end)
+
     Application.delete_env(:sigil_probe, :staging_roots)
     data = Path.join(System.tmp_dir!(), "mob_data_#{System.unique_integer([:positive])}")
     assert :ok = SigilProbe.App.configure_staging_roots!(%{"MOB_DATA_DIR" => data})
     assert Application.get_env(:sigil_probe, :staging_roots) == [Path.join(data, "share_intake")]
+  end
+
+  test "iOS MOB_DATA_DIR also stages photo-picker copies under Caches" do
+    previous_platform = Application.get_env(:sigil_probe, :native_platform)
+    SigilProbe.NativePlatform.put!(:ios)
+
+    on_exit(fn ->
+      if previous_platform == nil do
+        Application.delete_env(:sigil_probe, :native_platform)
+      else
+        Application.put_env(:sigil_probe, :native_platform, previous_platform)
+      end
+    end)
+
+    Application.delete_env(:sigil_probe, :staging_roots)
+    data = Path.join(System.tmp_dir!(), "mob_data_#{System.unique_integer([:positive])}")
+    assert :ok = SigilProbe.App.configure_staging_roots!(%{"MOB_DATA_DIR" => data})
+
+    assert Application.get_env(:sigil_probe, :staging_roots) == [
+             Path.join([data, "Caches", "controlled_import"]),
+             Path.join(data, "share_intake")
+           ]
   end
 
   test "cacerts_path prefers MOB_BEAMS_DIR priv over Application.app_dir" do

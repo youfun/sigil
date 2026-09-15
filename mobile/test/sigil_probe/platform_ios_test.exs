@@ -70,11 +70,11 @@ defmodule SigilProbe.Platform.IOSTest do
     _ = Registry.take_pick(self())
 
     on_exit(fn ->
-      _ = Registry.take_pick(self())
       restore(:native_platform, previous_platform)
       restore(:ios_platform_adapter, previous_adapter)
       restore(:staging_roots, previous_roots)
       restore(:ios_snapshot_root, previous_snap)
+      _ = Registry.take_pick(self())
       File.rm_rf!(staging)
       File.rm_rf!(snap_root)
     end)

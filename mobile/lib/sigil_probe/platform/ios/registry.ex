@@ -11,14 +11,21 @@ defmodule SigilProbe.Platform.IOS.Registry do
 
   @spec ensure_started() :: :ok
   def ensure_started do
-    case start_owner() do
-      {:ok, _pid} -> :ok
-      {:error, {:already_started, _pid}} -> :ok
+    case Process.whereis(__MODULE__) do
+      nil ->
+        case start_owner() do
+          {:ok, _pid} -> :ok
+          {:error, {:already_started, _pid}} -> :ok
+        end
+
+      _pid ->
+        :ok
     end
   end
 
+  # Unlinked so Mix tests do not kill the ETS owner when the test process exits.
   defp start_owner do
-    Agent.start_link(
+    Agent.start(
       fn ->
         _ = table!(@table)
         _ = table!(@picks)
@@ -42,9 +49,13 @@ defmodule SigilProbe.Platform.IOS.Registry do
   def take_pick(caller) when is_pid(caller) do
     ensure_started()
 
-    case :ets.take(@picks, caller) do
-      [{^caller, session}] -> {:ok, session}
-      _ -> :error
+    try do
+      case :ets.take(@picks, caller) do
+        [{^caller, session}] -> {:ok, session}
+        _ -> :error
+      end
+    rescue
+      ArgumentError -> :error
     end
   end
 

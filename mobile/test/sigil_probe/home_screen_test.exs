@@ -110,6 +110,8 @@ defmodule SigilProbe.HomeScreenTest do
     dir = Path.join(System.tmp_dir!(), "native_chat_#{System.unique_integer([:positive])}")
     File.mkdir_p!(dir)
     host = Application.get_env(:sigil, :host)
+    previous_platform = Application.get_env(:sigil_probe, :native_platform)
+    SigilProbe.NativePlatform.put!(:android)
     Sigil.Host.put!(%{data_dir: dir, shell: false, mcp: false})
 
     vars = %{
@@ -126,6 +128,10 @@ defmodule SigilProbe.HomeScreenTest do
       if host,
         do: Application.put_env(:sigil, :host, host),
         else: Application.delete_env(:sigil, :host)
+
+      if previous_platform,
+        do: Application.put_env(:sigil_probe, :native_platform, previous_platform),
+        else: Application.delete_env(:sigil_probe, :native_platform)
 
       Enum.each(previous, fn {key, value} ->
         if value, do: System.put_env(key, value), else: System.delete_env(key)
