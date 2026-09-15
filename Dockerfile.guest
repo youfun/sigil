@@ -1,0 +1,27 @@
+# Guest preview image: OTP release only, no Elixir source.
+# Build context must be a directory that contains rel/sigil/ from
+# mix release (or scripts/build_local_release.sh).
+#
+#   mkdir -p /tmp/sigil-guest-ctx
+#   cp -a _build/local_release/prod/rel/sigil /tmp/sigil-guest-ctx/rel/sigil
+#   cp Dockerfile.guest /tmp/sigil-guest-ctx/Dockerfile
+#   docker build -t sigil-guest:local /tmp/sigil-guest-ctx
+FROM debian:bookworm-slim
+
+RUN apt-get update -qq && apt-get install -y -qq --no-install-recommends \
+      libssl3 libncurses6 ca-certificates openssl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /opt/sigil
+COPY rel/sigil/ ./
+
+ENV PHX_SERVER=true \
+    PORT=4000 \
+    HOME=/data \
+    DATABASE_PATH=/data/sigil.db \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8
+
+EXPOSE 4000
+USER nobody
+CMD ["bin/sigil", "start"]

@@ -1,0 +1,163 @@
+{
+  "spec": "docs/otp-agent-runtime-spec.md",
+  "updated_at": "2026-05-16T00:00:00Z",
+  "phases": [
+    {
+      "phase": 1,
+      "name": "Coordinator + Basic Supervision",
+      "status": "completed",
+      "summary": "Implement Coordinator facade, supervised sessions, AgentRunRegistry, and AgentRunTaskSupervisor. Route WorkspaceLive agent sends through Coordinator.",
+      "completed_at": "2026-05-16T00:00:00Z",
+      "review_tests": [
+        {
+          "command": "mix test test/sigil/agent/coordinator_test.exs test/sigil/session_supervisor_test.exs test/sigil/pubsub/session_test.exs test/sigil_web/live/workspace_live_test.exs",
+          "result": "132 tests, 0 failures"
+        }
+      ],
+      "smoke_tests": [
+        {
+          "command": "mix test test/sigil/dogfood_smoke_test.exs",
+          "result": "9 tests, 0 failures"
+        }
+      ],
+      "regression_tests": [
+        {
+          "command": "mix test",
+          "result": "1147 tests, 0 failures (24 excluded)"
+        }
+      ],
+      "notes": [
+        "WorkspaceLive no longer starts agent runs directly; sends route through Sigil.Agent.Coordinator.add_message/3.",
+        "Session.start_or_get/1 now starts sessions through Sigil.SessionSupervisor while preserving the {:already_started, pid} path.",
+        "Background agent and title-generation tasks run under Sigil.AgentRunTaskSupervisor.",
+        "Follow-up phases 2-5 are now completed and tracked in this status file."
+      ]
+    },
+    {
+      "phase": 2,
+      "name": "Runner GenServer",
+      "status": "completed",
+      "summary": "Add Runner status/cancel ownership and async_nolink task handling.",
+      "completed_at": "2026-05-16T00:00:00Z",
+      "review_tests": [
+        {
+          "command": "mix test test/sigil/agent/runner_test.exs",
+          "result": "3 tests, 0 failures"
+        }
+      ],
+      "smoke_tests": [
+        {
+          "command": "mix test test/sigil/dogfood_smoke_test.exs",
+          "result": "9 tests, 0 failures"
+        }
+      ],
+      "regression_tests": [
+        {
+          "command": "mix test",
+          "result": "1164 tests, 0 failures (24 excluded)"
+        }
+      ],
+      "notes": [
+        "Added Sigil.Agent.Runner as the run state owner.",
+        "Runner uses Task.Supervisor.async_nolink/2 for Sigil.Agent.run/2 execution.",
+        "Coordinator.status/1 and cancel/1 now route through Runner when an active runner exists.",
+        "Task crash broadcasts run_end status: error and leaves Session idle."
+      ]
+    },
+    {
+      "phase": 3,
+      "name": "Per-run Supervisor + Queue Ownership",
+      "status": "completed",
+      "summary": "Move CandidateQueue ownership to run supervision tree.",
+      "completed_at": "2026-05-16T00:00:00Z",
+      "review_tests": [
+        {
+          "command": "mix test test/sigil/agent/run_supervisor_test.exs",
+          "result": "3 tests, 0 failures"
+        }
+      ],
+      "smoke_tests": [
+        {
+          "command": "mix test test/sigil/dogfood_smoke_test.exs",
+          "result": "9 tests, 0 failures"
+        }
+      ],
+      "regression_tests": [
+        {
+          "command": "mix test",
+          "result": "1164 tests, 0 failures (24 excluded)"
+        }
+      ],
+      "notes": [
+        "Added Sigil.AgentRunSupervisor DynamicSupervisor and per-run Sigil.Agent.RunSupervisor.",
+        "RunSupervisor starts CandidateQueue before Runner with a one_for_all strategy.",
+        "Sigil.Agent.run/2 accepts an external candidate_queue and no longer creates a queue when Runner supplies one.",
+        "Cancel seals the queue; stale queue enqueue returns {:error, :sealed}; same conversation rejects concurrent start_run/3."
+      ]
+    },
+    {
+      "phase": 4,
+      "name": "EventRecorder",
+      "status": "completed",
+      "summary": "Record important session events to jsonl with secret filtering and delta throttling.",
+      "completed_at": "2026-05-16T00:00:00Z",
+      "review_tests": [
+        {
+          "command": "mix test test/sigil/event_recorder_test.exs test/sigil/pubsub/session_test.exs",
+          "result": "23 tests, 0 failures"
+        }
+      ],
+      "smoke_tests": [
+        {
+          "command": "mix test test/sigil/dogfood_smoke_test.exs",
+          "result": "9 tests, 0 failures"
+        }
+      ],
+      "regression_tests": [
+        {
+          "command": "mix test",
+          "result": "1164 tests, 0 failures (24 excluded)"
+        }
+      ],
+      "notes": [
+        "Added Sigil.EventRecorder JSONL writer.",
+        "Records run_start, tool_start, tool_end, run_end, and error events.",
+        "Skips high-frequency message_delta events.",
+        "Applies Sigil.Log.Redactor before writing jsonl.",
+        "Session.broadcast_event/3 integration records important events when enabled."
+      ]
+    },
+    {
+      "phase": 5,
+      "name": "SessionStore",
+      "status": "completed",
+      "summary": "Add SessionStore behaviour and file-backed runtime snapshot persistence.",
+      "completed_at": "2026-05-16T00:00:00Z",
+      "review_tests": [
+        {
+          "command": "mix test test/sigil/session_store/file_test.exs test/sigil/pubsub/session_test.exs",
+          "result": "22 tests, 0 failures"
+        }
+      ],
+      "smoke_tests": [
+        {
+          "command": "mix test test/sigil/dogfood_smoke_test.exs",
+          "result": "9 tests, 0 failures"
+        }
+      ],
+      "regression_tests": [
+        {
+          "command": "mix test",
+          "result": "1164 tests, 0 failures (24 excluded)"
+        }
+      ],
+      "notes": [
+        "Added Sigil.SessionStore behaviour and Sigil.SessionStore.File implementation.",
+        "Session snapshots save seq, events, running?, model, and next_turn_messages.",
+        "File store scrubs pid/task/ref/port runtime values before writing.",
+        "Session load restores recoverable snapshot data and never restores pid/task/queue.",
+        "Session restart integration restores snapshot and next_turn_messages from file store when enabled."
+      ]
+    }
+  ]
+}
